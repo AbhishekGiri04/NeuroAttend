@@ -36,12 +36,25 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen">
-      <Navbar activeSection={activeSection} setActiveSection={setActiveSection} />
-      <main>
-        {renderSection()}
-      </main>
-      <Footer />
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Creative Background */}
+      <div 
+        className="absolute inset-0 bg-cover bg-top bg-no-repeat"
+        style={{
+          backgroundImage: 'url(https://images.unsplash.com/photo-1532073145718-62df48eaa35e?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8c3R1ZHklMjBhZXN0aGV0aWN8ZW58MHx8MHx8fDA%3D)'
+        }}
+      >
+        <div className="absolute inset-0 bg-black/0"></div>
+      </div>
+
+      
+      <div className="relative z-10">
+        <Navbar activeSection={activeSection} setActiveSection={setActiveSection} />
+        <main>
+          {renderSection()}
+        </main>
+        <Footer />
+      </div>
     </div>
   );
 }

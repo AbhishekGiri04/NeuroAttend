@@ -5,6 +5,8 @@ const LiveFeed = () => {
   const [results, setResults] = useState([]);
   const [sessionActive, setSessionActive] = useState(false);
   const [sessionStudents, setSessionStudents] = useState(new Set());
+  const [unknownDetections, setUnknownDetections] = useState(0);
+  const [securityAlert, setSecurityAlert] = useState(false);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const overlayRef = useRef(null);
@@ -23,6 +25,8 @@ const LiveFeed = () => {
       setSessionActive(true);
       setSessionStudents(new Set());
       setResults([]);
+      setUnknownDetections(0);
+      setSecurityAlert(false);
       console.log('📹 Attendance session started...');
       
       // Start real-time recognition
@@ -64,6 +68,32 @@ const LiveFeed = () => {
           const data = await response.json();
           if (data.results && data.results.length > 0) {
             console.log('✅ Recognition results:', data.results);
+            
+            // Check for unknown persons
+            const unknownPersons = data.results.filter(r => r.type === 'unknown' || !r.roll_number);
+            
+            if (unknownPersons.length > 0) {
+              setUnknownDetections(prev => {
+                const newCount = prev + unknownPersons.length;
+                
+                // Auto-shutdown after 3 unknown detections
+                if (newCount >= 3) {
+                  setSecurityAlert(true);
+                  setTimeout(() => {
+                    stopRecognition();
+                    showSecurityAlert({
+                      title: 'Security Alert - Camera Stopped',
+                      message: 'Unknown person detected 3 times. Camera automatically stopped for fraud prevention. Please verify authorized personnel only.',
+                      type: 'error',
+                      duration: 8000
+                    });
+                  }, 1000);
+                }
+                
+                return newCount;
+              });
+            }
+            
             setResults(prev => {
               const newResults = [...prev];
               data.results.forEach(result => {
@@ -117,27 +147,112 @@ const LiveFeed = () => {
       const sessionTime = new Date().toISOString();
       const presentStudents = Array.from(sessionStudents);
       
-      const response = await fetch('http://localhost:8080/mark-session-attendance', {
+      const response = await fetch('http://localhost:8080/mark-class-attendance', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          session_time: sessionTime,
-          present_students: presentStudents
+          class_time: sessionTime,
+          present_students: presentStudents,
+          class_type: 'Live Recognition Session'
         })
       });
       
       if (response.ok) {
         const result = await response.json();
-        console.log('✅ Session attendance recorded:', result);
+        console.log('✅ Class attendance recorded:', result);
         
-        // Show session summary
-        alert(`📊 Session Attendance Summary:\n\n✅ Present in Session: ${result.present_count}\n❌ Not Detected: ${result.absent_count}\n\nSession completed. Alerts can be sent from Admin panel.`);
+        // Professional class completion notification
+        const notification = {
+          title: 'Class Session Completed',
+          message: `Attendance recorded for ${result.present_count} students. ${result.absent_count} students were not detected.`,
+          type: 'success',
+          duration: 5000
+        };
+        
+        // Show professional notification instead of alert
+        showClassNotification(notification);
       }
     } catch (error) {
-      console.error('❌ Error recording session attendance:', error);
+      console.error('❌ Error recording class attendance:', error);
     }
+  };
+  
+  const showClassNotification = (notification) => {
+    // Create professional notification element
+    const notificationDiv = document.createElement('div');
+    notificationDiv.className = 'fixed top-4 right-4 bg-white border-l-4 border-green-500 rounded-lg shadow-lg p-4 max-w-md z-50';
+    notificationDiv.innerHTML = `
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm font-medium text-gray-900">${notification.title}</p>
+          <p class="text-sm text-gray-500 mt-1">${notification.message}</p>
+        </div>
+        <div class="ml-auto pl-3">
+          <button onclick="this.parentElement.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(notificationDiv);
+    
+    // Auto remove after duration
+    setTimeout(() => {
+      if (notificationDiv.parentNode) {
+        notificationDiv.remove();
+      }
+    }, notification.duration);
+  };
+  
+  const showSecurityAlert = (alert) => {
+    // Create professional security alert
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'fixed top-4 right-4 bg-white border-l-4 border-red-500 rounded-lg shadow-xl p-6 max-w-md z-50 animate-pulse';
+    alertDiv.innerHTML = `
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          <svg class="h-6 w-6 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm font-bold text-red-800">${alert.title}</p>
+          <p class="text-sm text-red-600 mt-2 leading-relaxed">${alert.message}</p>
+          <div class="mt-3 flex items-center text-xs text-red-500">
+            <svg class="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+            </svg>
+            Security Protocol Activated
+          </div>
+        </div>
+        <div class="ml-auto pl-3">
+          <button onclick="this.parentElement.parentElement.parentElement.remove()" class="text-red-400 hover:text-red-600">
+            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Auto remove after duration
+    setTimeout(() => {
+      if (alertDiv.parentNode) {
+        alertDiv.remove();
+      }
+    }, alert.duration);
   };
 
   // Update recognition processing when state changes
@@ -149,8 +264,8 @@ const LiveFeed = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900">
+      {/* Remove individual page background to use App.jsx background */}
+      <div className="absolute inset-0">
         {/* Floating Particles */}
         <div className="absolute inset-0">
           {[...Array(50)].map((_, i) => (
@@ -265,8 +380,18 @@ const LiveFeed = () => {
                   </div>
                 </div>
                 <div className="flex items-center space-x-3 bg-slate-900/80 px-6 py-3 rounded-2xl border border-slate-600/50">
-                  <div className={`w-3 h-3 rounded-full ${isRecognizing ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`}></div>
-                  <span className="text-white font-bold text-sm">{isRecognizing ? 'LIVE' : 'OFFLINE'}</span>
+                  <div className={`w-3 h-3 rounded-full ${
+                    securityAlert ? 'bg-red-500 animate-pulse' :
+                    isRecognizing ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
+                  }`}></div>
+                  <span className="text-white font-bold text-sm">
+                    {securityAlert ? 'SECURITY ALERT' : isRecognizing ? 'LIVE' : 'OFFLINE'}
+                  </span>
+                  {isRecognizing && unknownDetections > 0 && (
+                    <span className="text-red-400 text-xs font-medium">
+                      Unknown: {unknownDetections}/3
+                    </span>
+                  )}
                 </div>
               </div>
               
@@ -386,7 +511,7 @@ const LiveFeed = () => {
                       
 
                       
-                      {result.attendance_marked !== undefined && (
+                      {result.attendance_marked !== undefined && result.type !== 'unknown' && (
                         <div className={`text-xs font-medium ${
                           result.attendance_marked ? 'text-emerald-300' : 'text-amber-300'
                         }`}>
@@ -414,7 +539,7 @@ const LiveFeed = () => {
                 <div className="flex items-center justify-between p-3 bg-amber-500/10 rounded-xl border border-amber-500/20">
                   <div className="flex items-center">
                     <div className="w-4 h-4 bg-amber-500 rounded-full mr-3 shadow-lg"></div>
-                    <span className="text-amber-300 font-medium">Face Masked</span>
+                    <span className="text-amber-300 font-medium">Masked/Partial Face</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-red-500/10 rounded-xl border border-red-500/20">

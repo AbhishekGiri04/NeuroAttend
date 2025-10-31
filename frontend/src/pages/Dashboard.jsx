@@ -38,10 +38,10 @@ const Dashboard = () => {
   }, []);
 
   const weeklyChartData = {
-    labels: stats.weekly_trend.map(d => d.date),
+    labels: stats.weekly_trend?.length > 0 ? stats.weekly_trend.map(d => d.date) : ['No Data'],
     datasets: [{
       label: 'Daily Attendance',
-      data: stats.weekly_trend.map(d => d.count),
+      data: stats.weekly_trend?.length > 0 ? stats.weekly_trend.map(d => d.attendance || 0) : [0],
       borderColor: '#667eea',
       backgroundColor: 'rgba(102, 126, 234, 0.1)',
       tension: 0.4
@@ -49,16 +49,16 @@ const Dashboard = () => {
   };
 
   const activeChartData = {
-    labels: stats.top_users.map(u => u.name),
+    labels: stats.top_users?.length > 0 ? stats.top_users.map(u => u.name) : ['No Students'],
     datasets: [{
       label: 'Attendance Count',
-      data: stats.top_users.map(u => u.count),
+      data: stats.top_users?.length > 0 ? stats.top_users.map(u => u.attendance_count || 0) : [0],
       backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe']
     }]
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-20 mt-20 relative" style={{backgroundImage: 'url(https://c4.wallpaperflare.com/wallpaper/439/992/3/minimalism-clouds-white-blue-wallpaper-preview.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', filter: 'brightness(0.95)'}}>
+    <div className="min-h-screen pt-24 pb-20 mt-20 relative" style={{backgroundImage: 'url(https://wallpapers.com/images/hd/cloud-background-ghu4yqszlggj4f7d.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', filter: 'brightness(0.95)'}}>
       <div className="container mx-auto p-6">
         {/* Hero Section */}
         <div className="text-center mb-16 bg-white/20 backdrop-blur-md rounded-3xl p-12 mx-auto max-w-5xl shadow-2xl border border-white/30">
@@ -116,32 +116,81 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Recent Absent Students */}
-        {stats.recent_absent && stats.recent_absent.length > 0 && (
+        {/* Analytics Information */}
+        {stats.total_users === 0 && (
           <div className="mb-16 max-w-7xl mx-auto">
-            <div className="bg-red-500/20 backdrop-blur-md p-8 rounded-3xl shadow-2xl border border-red-500/30">
-              <div className="flex items-center mb-6">
-                <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-rose-500 rounded-2xl flex items-center justify-center mr-4">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            <div className="bg-gradient-to-r from-slate-800/90 to-slate-900/90 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-slate-600/30">
+              <div className="flex items-center mb-8">
+                <div className="w-20 h-20 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center mr-6">
+                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-3xl font-bold text-white">Recently Marked Absent</h3>
-                  <p className="text-red-200">Students who were not detected during live sessions</p>
+                  <h3 className="text-4xl font-bold text-white mb-2">Analytics Dashboard</h3>
+                  <p className="text-slate-300 text-lg">Real-time attendance insights and performance metrics</p>
                 </div>
               </div>
-              <div className="grid md:grid-cols-3 gap-4">
-                {stats.recent_absent.slice(0, 6).map((student, index) => (
-                  <div key={index} className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-red-400/30">
-                    <div className="text-white font-bold">{student.name}</div>
-                    <div className="text-red-200 text-sm">Roll: {student.roll_id}</div>
-                    <div className="text-red-300 text-xs mt-1">{student.date}</div>
+              
+              <div className="grid md:grid-cols-3 gap-8">
+                <div className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-indigo-400/20">
+                  <div className="flex items-center mb-4">
+                    <div className="w-12 h-12 bg-indigo-500/20 rounded-xl flex items-center justify-center mr-4">
+                      <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <h4 className="text-white font-bold text-lg">Weekly Trends</h4>
                   </div>
-                ))}
+                  <p className="text-slate-300 text-sm leading-relaxed">Comprehensive 7-day attendance patterns with daily breakdowns and percentage calculations.</p>
+                </div>
+                
+                <div className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-purple-400/20">
+                  <div className="flex items-center mb-4">
+                    <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mr-4">
+                      <svg className="w-6 h-6 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    </div>
+                    <h4 className="text-white font-bold text-lg">Top Performers</h4>
+                  </div>
+                  <p className="text-slate-300 text-sm leading-relaxed">Ranking of most consistent students based on attendance frequency and participation rates.</p>
+                </div>
+                
+                <div className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-emerald-400/20">
+                  <div className="flex items-center mb-4">
+                    <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center mr-4">
+                      <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </div>
+                    <h4 className="text-white font-bold text-lg">Live Updates</h4>
+                  </div>
+                  <p className="text-slate-300 text-sm leading-relaxed">Real-time data synchronization with automatic refresh every 30 seconds for current metrics.</p>
+                </div>
               </div>
-              <div className="mt-6 text-center">
-                <p className="text-red-200 text-sm">💡 Send alerts to these students from the Admin panel</p>
+              
+              <div className="mt-8 p-6 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl border border-blue-400/20">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-white font-bold text-lg mb-2">Getting Started</h4>
+                    <p className="text-slate-300 text-sm">Begin by enrolling students and conducting live recognition sessions to populate analytics</p>
+                  </div>
+                  <div className="flex space-x-4">
+                    <div className="text-center">
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm mb-1">1</div>
+                      <p className="text-xs text-slate-400">Enroll</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm mb-1">2</div>
+                      <p className="text-xs text-slate-400">Recognize</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm mb-1">3</div>
+                      <p className="text-xs text-slate-400">Analyze</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -150,30 +199,96 @@ const Dashboard = () => {
         {/* Charts Section */}
         <div className="grid md:grid-cols-2 gap-10 max-w-7xl mx-auto">
           <div className="bg-white p-10 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 border">
-            <div className="flex items-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mr-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mr-4">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-3xl font-bold text-gray-800">Weekly Attendance Analytics</h3>
+                  <p className="text-gray-500 text-sm mt-1">7-day attendance pattern analysis</p>
+                </div>
               </div>
-              <h3 className="text-3xl font-bold text-gray-800">Weekly Attendance Trend</h3>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-blue-600">{stats.attendance_rate}%</div>
+                <div className="text-xs text-gray-500">Average Rate</div>
+              </div>
             </div>
-            <div style={{ height: '300px' }}>
-              <Line data={weeklyChartData} options={{ responsive: true, maintainAspectRatio: false }} />
+            <div style={{ height: '350px' }}>
+              <Line data={weeklyChartData} options={{ 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: 'top'
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    title: {
+                      display: true,
+                      text: 'Students Present'
+                    }
+                  },
+                  x: {
+                    title: {
+                      display: true,
+                      text: 'Date'
+                    }
+                  }
+                }
+              }} />
             </div>
           </div>
           
           <div className="bg-white p-10 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 border">
-            <div className="flex items-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-2xl flex items-center justify-center mr-4">
-                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center">
+                <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-2xl flex items-center justify-center mr-4">
+                  <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-3xl font-bold text-gray-800">Top Performing Students</h3>
+                  <p className="text-gray-500 text-sm mt-1">Ranked by attendance consistency</p>
+                </div>
               </div>
-              <h3 className="text-3xl font-bold text-gray-800">Most Active Students</h3>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-orange-600">{stats.top_users?.length || 0}</div>
+                <div className="text-xs text-gray-500">Active Students</div>
+              </div>
             </div>
-            <div style={{ height: '300px' }}>
-              <Bar data={activeChartData} options={{ responsive: true, maintainAspectRatio: false }} />
+            <div style={{ height: '350px' }}>
+              <Bar data={activeChartData} options={{ 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: 'top'
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    title: {
+                      display: true,
+                      text: 'Attendance Count'
+                    }
+                  },
+                  x: {
+                    title: {
+                      display: true,
+                      text: 'Students'
+                    }
+                  }
+                }
+              }} />
             </div>
           </div>
         </div>

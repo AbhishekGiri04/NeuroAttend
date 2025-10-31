@@ -8,8 +8,11 @@ def init_database():
     # Database file in project root/database folder
     db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database', 'attendance.db')
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    print(f"Database path: {db_path}")
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
+    
+    print("Creating database tables...")
     
     # Students table
     cursor.execute('''
@@ -50,6 +53,7 @@ def init_database():
     ''')
     
     conn.commit()
+    print("Database tables created successfully")
     conn.close()
 
 def save_student(name, roll_id, email, face_encoding):

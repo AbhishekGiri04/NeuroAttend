@@ -65,6 +65,11 @@ class FaceRecognitionService:
             # Find faces using face_recognition (better than Haar cascade)
             face_locations = face_recognition.face_locations(rgb_frame, model='hog', number_of_times_to_upsample=1)
             
+            # Detect masks using OpenCV cascade
+            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+            detected_faces = faces_cascade.detectMultiScale(gray_frame, 1.1, 4)
+            
             print(f"🔍 Found {len(face_locations)} faces in frame")
             
             if len(face_locations) == 0:
@@ -97,8 +102,11 @@ class FaceRecognitionService:
                     print(f"🎯 Best match distance: {min_distance:.3f}, tolerance: {self.tolerance}")
                     print(f"📚 Available students: {[name for name in self.known_face_names]}")
                     
-                    # Use enrollment photo only for attendance marking
-                    if min_distance < self.tolerance:
+                    # Check if face is masked or partially visible
+                    is_masked = self.detect_mask_or_partial_face(face_encoding, face_locations[0] if face_locations else None)
+                    
+                    # Use enrollment photo for attendance marking (works with masks)
+                    if min_distance < (self.tolerance + 0.1 if is_masked else self.tolerance):
                         # Face recognized from enrollment photo
                         name = self.known_face_names[best_match_index]
                         student_id = self.known_face_ids[best_match_index]
@@ -109,16 +117,25 @@ class FaceRecognitionService:
                         
                         confidence = round((1 - min_distance) * 100, 1)
                         
+                        # Determine status based on mask detection
+                        if is_masked:
+                            status = 'Recognized with Mask/Partial Face'
+                            result_type = 'masked'
+                        else:
+                            status = 'Recognized & Present'
+                            result_type = 'present'
+                        
                         results.append({
                             'name': name,
                             'roll_number': roll_number,
-                            'status': 'Recognized & Present',
+                            'status': status,
                             'timestamp': self.get_current_time(),
-                            'type': 'present',
+                            'type': result_type,
                             'confidence': confidence,
                             'attendance_marked': attendance_marked,
                             'student_id': student_id,
-                            'source': 'enrollment_photo'
+                            'source': 'enrollment_photo',
+                            'masked': is_masked
                         })
                         
                         print(f"✅ {name} ({roll_number}) marked present via enrollment photo ({confidence}%)")
@@ -126,8 +143,34 @@ class FaceRecognitionService:
                     else:
                         print(f"❌ Face not recognized - distance {min_distance:.3f} > tolerance {self.tolerance}")
                         print(f"🔍 Try moving closer to camera or improving lighting")
+                        
+                        # Return unknown person result for security monitoring
+                        results.append({
+                            'name': 'Unknown Person',
+                            'roll_number': None,
+                            'status': 'Unregistered - Security Risk',
+                            'timestamp': self.get_current_time(),
+                            'type': 'unknown',
+                            'confidence': round((1 - min_distance) * 100, 1),
+                            'attendance_marked': False,
+                            'student_id': None,
+                            'source': 'unknown_detection'
+                        })
                 else:
                     print("❌ No known faces to compare with - check if students are enrolled")
+                    
+                    # Return unknown person result when no enrolled students
+                    results.append({
+                        'name': 'Unknown Person',
+                        'roll_number': None,
+                        'status': 'No Enrolled Students Found',
+                        'timestamp': self.get_current_time(),
+                        'type': 'unknown',
+                        'confidence': 0,
+                        'attendance_marked': False,
+                        'student_id': None,
+                        'source': 'no_database'
+                    })
             
             return results
             
@@ -254,6 +297,40 @@ class FaceRecognitionService:
         except Exception as e:
             print(f"Error extracting eye structure: {e}")
             return np.zeros(3)  # Return zero features if extraction fails
+    
+    def detect_mask_or_partial_face(self, face_encoding, face_location):
+        """Detect if person is wearing mask or showing partial face"""
+        try:
+            # Simple heuristic: if encoding has lower confidence in mouth/nose area
+            # or if face location indicates partial visibility
+            if face_location:
+                top, right, bottom, left = face_location
+                face_height = bottom - top
+                face_width = right - left
+                
+                # Check if face dimensions suggest partial visibility
+                aspect_ratio = face_width / face_height if face_height > 0 else 0
+                
+                # Typical face ratio is around 0.75, masked faces may have different ratios
+                if aspect_ratio < 0.6 or aspect_ratio > 1.0:
+                    return True
+                    
+                # Check if face is too small (might be partially visible)
+                if face_height < 80 or face_width < 60:
+                    return True
+            
+            # Additional check: analyze encoding patterns for mask indicators
+            if len(face_encoding) >= 128:
+                # Lower portion of encoding often represents mouth/nose area
+                lower_features = face_encoding[64:96]
+                if np.std(lower_features) < 0.1:  # Low variation suggests obstruction
+                    return True
+            
+            return False
+            
+        except Exception as e:
+            print(f"Error in mask detection: {e}")
+            return False
     
     def enhanced_face_distance(self, known_encodings, face_encoding):
         """Enhanced distance calculation using facial structure"""

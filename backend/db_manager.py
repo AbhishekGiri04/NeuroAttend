@@ -93,6 +93,8 @@ class StudentDB:
             f.write(f"Section: {student_info.get('Section', 'Unknown')}\n")
             f.write(f"Status: {reason}\n")
             f.write(f"Session Type: Live Camera Session\n")
+            f.write(f"Alert Type: Professional Academic Notification\n")
+            f.write(f"Delivery Method: WhatsApp + Email\n")
             f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         
         # Send WhatsApp alert
@@ -121,11 +123,49 @@ class StudentDB:
             message += f"Please contact administration if this is incorrect.\n\n"
             message += f"- NeuroAttend AI System 🧠"
             
-            # Using WhatsApp Business API (replace with your API)
-            # For demo, we'll just log the message
-            print(f"📱 WhatsApp Alert Sent to {phone}: {message}")
-            
-            return True
+            # Send actual WhatsApp using Twilio API
+            try:
+                from twilio.rest import Client
+                
+                # Twilio credentials (replace with your credentials)
+                account_sid = 'your_account_sid'
+                auth_token = 'your_auth_token'
+                twilio_phone = '+1234567890'
+                
+                client = Client(account_sid, auth_token)
+                
+                whatsapp_message = client.messages.create(
+                    body=message,
+                    from_=f'whatsapp:{twilio_phone}',
+                    to=f'whatsapp:+91{phone}'
+                )
+                
+                print(f"📱 WhatsApp sent successfully to +91{phone}")
+                return True
+                
+            except Exception as twilio_error:
+                # Open WhatsApp with pre-filled professional message
+                import webbrowser
+                import urllib.parse
+                
+                professional_msg = f"ATTENDANCE ALERT\n\n"
+                professional_msg += f"Dear {student_info.get('Student Name', 'Student')},\n\n"
+                professional_msg += f"You have been marked {reason} on {date}.\n\n"
+                professional_msg += f"Student Details:\n"
+                professional_msg += f"• Roll No: {student_info.get('Roll Number', 'N/A')}\n"
+                professional_msg += f"• Department: {student_info.get('Department', 'N/A')}\n"
+                professional_msg += f"• Section: {student_info.get('Section', 'N/A')}\n\n"
+                professional_msg += f"If you believe this is an error, please contact the administration immediately.\n\n"
+                professional_msg += f"Admin Contact: +91-1234567890\n\n"
+                professional_msg += f"Powered by NeuroAttend — AI Attendance System"
+                
+                # Format phone number and open WhatsApp
+                formatted_phone = f"+91{phone}"
+                whatsapp_url = f"https://wa.me/{formatted_phone.replace('+', '')}?text={urllib.parse.quote(professional_msg)}"
+                webbrowser.open(whatsapp_url)
+                
+                print(f"📱 WhatsApp opened for {formatted_phone}")
+                return True
             
         except Exception as e:
             print(f"❌ WhatsApp alert failed: {e}")

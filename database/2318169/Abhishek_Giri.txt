@@ -1,8 +1,0 @@
-Student Name: Abhishek Giri
-Roll Number: 2318169
-Email: abhishek@gehu.ac.in
-Phone: 8127176626
-Department: CSE
-Section: A1
-Enrollment Date: 2025-09-30 23:24:03
-Status: Active

@@ -74,14 +74,18 @@ const Enrollment = () => {
   const handleBulkSubmit = async (e) => {
     e.preventDefault();
     
-    if (!bulkForm.csvFile || !bulkForm.photosZip) {
-      alert('Please select both CSV file and photos ZIP');
+    if (!bulkForm.csvFile || !bulkForm.photosZip || bulkForm.photosZip.length === 0) {
+      showToast('Please select CSV file and student photos', 'warning');
       return;
     }
     
     const formData = new FormData();
     formData.append('csv_file', bulkForm.csvFile);
-    formData.append('photos_zip', bulkForm.photosZip);
+    
+    // Append all selected photos
+    for (let i = 0; i < bulkForm.photosZip.length; i++) {
+      formData.append('photos', bulkForm.photosZip[i]);
+    }
     
     try {
       const response = await fetch('http://localhost:8080/bulk-enroll', {
@@ -92,34 +96,19 @@ const Enrollment = () => {
       if (response.ok) {
         const result = await response.json();
         
-        let message = `Bulk Enrollment Completed!\n\n`;
-        message += `✅ Successfully Enrolled: ${result.enrolled?.length || 0}\n`;
-        message += `❌ Failed: ${result.failed?.length || 0}\n`;
-        message += `📊 Total Processed: ${result.total_processed || 0}\n\n`;
-        
-        if (result.failed && result.failed.length > 0) {
-          message += `Failed Students:\n`;
-          result.failed.slice(0, 5).forEach(fail => {
-            message += `• ${fail.name} (${fail.roll_id}): ${fail.error}\n`;
-          });
-          if (result.failed.length > 5) {
-            message += `... and ${result.failed.length - 5} more`;
-          }
-        }
-        
-        alert(message);
+        showToast(`Bulk Enrollment: ${result.enrolled?.length || 0} enrolled, ${result.failed?.length || 0} failed`, result.failed?.length > 0 ? 'warning' : 'success');
         setBulkForm({ csvFile: null, photosZip: null });
         
         // Reset file inputs
         const fileInputs = document.querySelectorAll('input[type="file"]');
         fileInputs.forEach(input => {
-          if (input.accept === '.csv' || input.accept === '.zip') {
+          if (input.accept === '.csv' || input.multiple) {
             input.value = '';
           }
         });
       } else {
         const error = await response.json();
-        alert(error.detail || 'Bulk enrollment failed');
+        showToast(error.detail || 'Bulk enrollment failed', 'error');
       }
     } catch (err) {
       showToast('Network error: ' + err.message, 'error');
@@ -149,10 +138,28 @@ const Enrollment = () => {
         
         if (result.status === 'verified') {
           showToast(`ID Verified: ${result.student_name} (${result.confidence}%)`, 'success');
+          showProfessionalNotification({
+            title: 'ID Card Verification Successful',
+            message: `Student ${result.student_name} (Roll: ${idVerifyForm.rollId}) has been successfully verified with ${result.confidence}% confidence.`,
+            type: 'success',
+            duration: 6000
+          });
         } else if (result.status === 'not_verified') {
           showToast(`ID Not Verified: ${result.student_name} (${result.confidence}%)`, 'warning');
+          showProfessionalNotification({
+            title: 'ID Card Verification Failed',
+            message: `ID card does not match enrolled student ${result.student_name}. Confidence: ${result.confidence}%`,
+            type: 'warning',
+            duration: 6000
+          });
         } else {
           showToast(result.message, 'error');
+          showProfessionalNotification({
+            title: 'ID Card Verification Error',
+            message: result.message || 'Unable to process ID card verification.',
+            type: 'error',
+            duration: 6000
+          });
         }
         
         setIdVerifyForm({ rollId: '', idCard: null });
@@ -172,18 +179,58 @@ const Enrollment = () => {
     }
   };
 
+  const showProfessionalNotification = (notification) => {
+    const notificationDiv = document.createElement('div');
+    const bgColor = notification.type === 'success' ? 'bg-green-50 border-green-200' : 
+                   notification.type === 'warning' ? 'bg-yellow-50 border-yellow-200' : 
+                   'bg-red-50 border-red-200';
+    const iconColor = notification.type === 'success' ? 'text-green-500' : 
+                     notification.type === 'warning' ? 'text-yellow-500' : 
+                     'text-red-500';
+    const textColor = notification.type === 'success' ? 'text-green-800' : 
+                     notification.type === 'warning' ? 'text-yellow-800' : 
+                     'text-red-800';
+    
+    notificationDiv.className = `fixed top-4 right-4 ${bgColor} border rounded-lg shadow-lg p-6 max-w-md z-50`;
+    notificationDiv.innerHTML = `
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          <svg class="h-6 w-6 ${iconColor}" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div class="ml-3 flex-1">
+          <h3 class="text-sm font-semibold ${textColor}">${notification.title}</h3>
+          <p class="text-sm ${textColor.replace('800', '700')} mt-1">${notification.message}</p>
+        </div>
+        <button onclick="this.parentElement.parentElement.remove()" class="ml-4 ${textColor.replace('800', '400')}">
+          <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+      </div>
+    `;
+    
+    document.body.appendChild(notificationDiv);
+    
+    setTimeout(() => {
+      if (notificationDiv.parentNode) {
+        notificationDiv.remove();
+      }
+    }, notification.duration);
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden mt-20">
       {/* HD Background */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: 'url(https://png.pngtree.com/thumb_back/fh260/background/20230112/pngtree-blue-colorful-light-light-purple-light-pink-gradient-geometric-material-poster-image_1510506.jpg)'
+          backgroundImage: 'url(https://content.presentermedia.com/files/clipart/00031000/31254/creative_burst_background_800_wht.jpg)'
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/30 via-purple-900/30 to-pink-900/30"></div>
+        <div className="absolute inset-0 bg-black/40"></div>
       </div>
-
       <div className="relative z-10 container mx-auto px-6 py-12">
         {/* Hero Section */}
         <div className="text-center mb-16 bg-white/20 backdrop-blur-md rounded-3xl p-12 mx-auto max-w-5xl shadow-2xl border border-white/30">
@@ -338,11 +385,11 @@ const Enrollment = () => {
                   </p>
                   <p className="flex items-center">
                     <span className="w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
-                    ZIP file must contain photos with exact matching filenames
+                    Select multiple photos with exact matching filenames
                   </p>
                   <p className="flex items-center">
                     <span className="w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
-                    Example: john_doe.jpg in ZIP matches "john_doe.jpg" in CSV
+                    Example: john_doe.jpg file matches "john_doe.jpg" in CSV
                   </p>
                 </div>
               </div>
@@ -360,14 +407,16 @@ const Enrollment = () => {
                 </div>
                 
                 <div className="space-y-1">
-                  <label className="text-white/95 font-medium text-sm">Photos ZIP</label>
+                  <label className="text-white/95 font-medium text-sm">Student Photos</label>
                   <input
                     type="file"
-                    accept=".zip"
-                    onChange={(e) => setBulkForm({...bulkForm, photosZip: e.target.files[0]})}
+                    accept=".jpg,.jpeg,.png"
+                    multiple
+                    onChange={(e) => setBulkForm({...bulkForm, photosZip: e.target.files})}
                     className="w-full p-3 bg-white/20 border border-white/40 rounded-lg text-white file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-white/30 file:text-white hover:file:bg-white/40 transition-all"
                     required
                   />
+                  <p className="text-xs text-white/70 mt-2">Select multiple JPG/JPEG files</p>
                 </div>
                 
                 <button
