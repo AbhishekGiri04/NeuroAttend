@@ -134,9 +134,11 @@ NeuroAttend/
 │   │       ├── 📄 Enrollment.jsx # 👤 Student enrollment
 │   │       ├── 📄 About.jsx      # ℹ️ About page
 │   │       └── 📄 Admin.jsx      # ⚙️ Admin panel
+│   ├── 📄 .env.example          # 🔧 Environment variables template
 │   ├── 📄 package.json          # 📦 Node.js dependencies
 │   ├── 📄 package-lock.json     # 🔒 Dependency lock file
-│   └── 📄 tailwind.config.js    # 🎨 Tailwind CSS configuration
+│   ├── 📄 tailwind.config.js    # 🎨 Tailwind CSS configuration
+│   └── 📄 vercel.json           # ☁️ Vercel deployment config
 │
 ├── 📂 database/                   # 🗄️ Student data organized by roll numbers
 │   ├── 📂 [ROLL_NUMBER]/         # 📁 Individual student folders
@@ -188,7 +190,7 @@ NeuroAttend/
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/AbhishekGiri04/NeuroAttend-Attendance_Management_System.git
 cd NeuroAttend-Attendance_Management_System
 
 # Install backend dependencies
