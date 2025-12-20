@@ -102,6 +102,24 @@ NeuroAttend is a revolutionary AI-powered attendance management system built to:
 
 ---
 
+## 🌐 Live Demo
+
+<div align="center">
+
+🚀 **Experience NeuroAttend Live**
+
+<a href="https://neuroattend.vercel.app" target="_blank">
+  <img src="https://img.shields.io/badge/Live%20Demo-NeuroAttend-blue?style=for-the-badge&logo=vercel" alt="Live Demo"/>
+</a>
+
+*Frontend deployed on Vercel with full functionality*
+
+</div>
+
+<br>
+
+---
+
 ## 📁 Project Directory Structure
 
 ```
@@ -154,9 +172,12 @@ NeuroAttend/
 │   ├── 📄 Home_Page.png          # 🏠 Home page screenshot
 │   └── 📄 Loading_Page.png       # ⏳ Loading screen screenshot
 │
-├── 📄 start.sh                   # 🚀 Single command startup script
-├── 📄 .gitignore                 # 🚫 Git ignore rules
-└── 📄 README.md                  # 📖 Project documentation
+├── 📄 Dockerfile                 # 🐳 Container configuration
+├── 📄 render.yaml               # ☁️ Render deployment config
+├── 📄 .dockerignore             # 🚫 Docker ignore rules
+├── 📄 start.sh                  # 🚀 Single command startup script
+├── 📄 .gitignore                # 🚫 Git ignore rules
+└── 📄 README.md                 # 📖 Project documentation
 ```
 <br>
 
@@ -222,7 +243,7 @@ npm start
 ```
 
 **Access Your Application:**
-- 🌐 **Frontend:** http://localhost:3000  
+- 🌐 **Frontend:** https://neuroattend.vercel.app  
 - 🔧 **Backend API:** http://localhost:8080  
 
 <br>

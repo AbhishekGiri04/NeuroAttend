@@ -1,0 +1,10 @@
+frontend/
+docs/
+.git/
+.gitignore
+README.md
+start.sh
+*.pyc
+__pycache__/
+*.db
+database/*/

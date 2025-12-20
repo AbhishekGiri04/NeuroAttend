@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: neuroattend-backend
+    env: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && python app.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.16

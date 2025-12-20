@@ -16,11 +16,22 @@ app = FastAPI(title="NeuroAttend API", version="1.0.0")
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["*"],  # Allow all origins for deployment
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Health check endpoints
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for deployment monitoring"""
+    return {"status": "healthy", "service": "NeuroAttend API"}
+
+@app.get("/")
+async def root():
+    """Root endpoint"""
+    return {"message": "NeuroAttend API is running", "version": "1.0.0"}
 
 # Initialize database and services
 print("Initializing database...")
@@ -445,4 +456,5 @@ async def verify_id_card(
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    port = int(os.environ.get("PORT", 8080))
+    uvicorn.run(app, host="0.0.0.0", port=port)
