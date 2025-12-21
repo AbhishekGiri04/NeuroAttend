@@ -1,3 +1,5 @@
+# NeuroAttend AI Attendance System - .gitignore
+
 # Python Backend
 __pycache__/
 *.py[cod]
@@ -10,12 +12,16 @@ backend/*.pyc
 backend/venv/
 backend/env/
 backend/.env
+*.egg-info/
+dist/
+build/
 
 # Virtual Environments
 venv/
 env/
 ENV/
 .venv/
+.env
 
 # Node.js Frontend
 node_modules/
@@ -25,6 +31,7 @@ yarn-debug.log*
 yarn-error.log*
 .npm
 .yarn-integrity
+package-lock.json
 
 # React Build & Distribution
 frontend/build/
@@ -33,7 +40,7 @@ frontend/.next/
 build/
 dist/
 
-# Database Files (Student Data)
+# Database Files (Student Data - Sensitive)
 database/*.db
 database/*/
 database/**/*.jpg
@@ -41,13 +48,17 @@ database/**/*.jpeg
 database/**/*.png
 database/**/*.txt
 database/attendance.db
+student_photos/
+face_encodings/
 
-# Face Recognition Models & Cache
+# AI/ML Models & Cache
 *.pkl
 *.h5
 *.pb
+*.onnx
 models/
-face_encodings/
+checkpoints/
+.cache/
 
 # IDE & Editors
 .vscode/
@@ -66,6 +77,7 @@ face_encodings/
 .Trashes
 ehthumbs.db
 Thumbs.db
+desktop.ini
 
 # Logs
 *.log
@@ -78,6 +90,8 @@ frontend/logs/
 *.temp
 *.bak
 tempCodeRunnerFile.*
+tmp/
+temp/
 
 # Environment Variables
 .env
@@ -93,6 +107,7 @@ coverage/
 *.lcov
 .nyc_output/
 test-results/
+.pytest_cache/
 
 # Cache Directories
 .cache/
@@ -103,6 +118,7 @@ test-results/
 # Build Artifacts
 *.tgz
 *.tar.gz
+*.zip
 
 # Runtime Data
 pids
@@ -113,23 +129,25 @@ pids
 # Optional Dependencies
 jspm_packages/
 
-# Serverless
+# Deployment
 .serverless/
+.vercel
+.netlify
 
-# FuseBox
-.fusebox/
+# Docker
+.dockerignore
+Dockerfile.dev
 
-# DynamoDB Local
-.dynamodb/
+# Security
+*.pem
+*.key
+certificates/
 
-# TernJS
-.tern-port
+# Backup files
+*.backup
+*.bak
+*~
 
-# Stores VSCode versions
-.vscode-test
-
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
+# OS generated files
+.fuse_hidden*
+.nfs*
