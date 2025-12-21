@@ -131,7 +131,7 @@ NeuroAttend/
 │   ├── 📄 db_manager.py          # 📁 Roll number based data management
 │   ├── 📄 student_utils.py       # 📧 Alert and utility functions
 │   ├── 📄 id_verification_service.py # 🆔 ID card verification system
-│   ├── 📄 haarcascade_frontalface_default.xml # 🎯 Face detection model
+│   ├── 📄 init_db.py             # 🔧 Database initialization script
 │   └── 📄 requirements.txt       # 📦 Python dependencies
 │
 ├── 📂 frontend/                   # ⚛️ React application
@@ -151,8 +151,7 @@ NeuroAttend/
 │   │       ├── 📄 Dashboard.jsx  # 📊 Analytics dashboard
 │   │       ├── 📄 Enrollment.jsx # 👤 Student enrollment
 │   │       ├── 📄 About.jsx      # ℹ️ About page
-│   │       └── 📄 Admin.jsx      # ⚙️ Admin panel
-│   ├── 📄 .env.example          # 🔧 Environment variables template
+│   │       └── 📄 Admin.jsx      # ⚙️ Admin panel with database reset
 │   ├── 📄 package.json          # 📦 Node.js dependencies
 │   ├── 📄 package-lock.json     # 🔒 Dependency lock file
 │   ├── 📄 tailwind.config.js    # 🎨 Tailwind CSS configuration
@@ -172,11 +171,11 @@ NeuroAttend/
 │   ├── 📄 Home_Page.png          # 🏠 Home page screenshot
 │   └── 📄 Loading_Page.png       # ⏳ Loading screen screenshot
 │
+├── 📄 .gitignore                 # 🚫 Git ignore rules (optimized)
+├── 📄 .dockerignore             # 🚫 Docker ignore rules
 ├── 📄 Dockerfile                 # 🐳 Container configuration
 ├── 📄 render.yaml               # ☁️ Render deployment config
-├── 📄 .dockerignore             # 🚫 Docker ignore rules
 ├── 📄 start.sh                  # 🚀 Single command startup script
-├── 📄 .gitignore                # 🚫 Git ignore rules
 └── 📄 README.md                 # 📖 Project documentation
 ```
 <br>
