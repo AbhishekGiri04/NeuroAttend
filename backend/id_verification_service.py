@@ -1,14 +1,15 @@
 import cv2
-import face_recognition
+import mediapipe as mp
 import numpy as np
 from database import get_student_by_roll_id, save_id_card_verification
 import os
+from sklearn.metrics.pairwise import cosine_similarity
 
 class IDVerificationService:
     def __init__(self):
-        # Load Haar cascade for face detection
-        cascade_path = os.path.join(os.path.dirname(__file__), 'haarcascade_frontalface_default.xml')
-        self.face_cascade = cv2.CascadeClassifier(cascade_path)
+        # Initialize MediaPipe
+        self.mp_face_detection = mp.solutions.face_detection
+        self.face_detection = self.mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
     
     def verify_id_card(self, roll_number, id_card_image_path):
         """Verify ID card photo matches enrolled student photo (OPTIONAL - not required for attendance)"""
@@ -40,9 +41,10 @@ class IDVerificationService:
                     'message': f'This ID card was already used for verification by another student: {duplicate_verification["student_name"]} ({duplicate_verification["roll_number"]})'
                 }
             
-            # Compare with enrolled face encoding
+            # Compare with enrolled face encoding using cosine similarity
             enrolled_encoding = student['face_encoding']
-            face_distance = face_recognition.face_distance([enrolled_encoding], id_card_encoding)[0]
+            similarity = cosine_similarity([enrolled_encoding], [id_card_encoding])[0][0]
+            face_distance = 1 - similarity
             
             # Verification threshold
             is_verified = face_distance < 0.5
@@ -160,8 +162,9 @@ class IDVerificationService:
                 if verification['student_id'] == current_student_id:
                     continue
                 
-                # Compare face encodings
-                distance = face_recognition.face_distance([verification['id_card_encoding']], id_card_encoding)[0]
+                # Compare face encodings using cosine similarity
+                similarity = cosine_similarity([verification['id_card_encoding']], [id_card_encoding])[0][0]
+                distance = 1 - similarity
                 
                 if distance < tolerance:
                     return {
