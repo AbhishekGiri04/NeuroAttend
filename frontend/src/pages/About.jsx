@@ -54,7 +54,7 @@ const About = () => {
   ];
 
   return (
-    <div className="min-h-screen pt-24 pb-20 mt-20 relative" style={{backgroundImage: 'url(https://png.pngtree.com/thumb_back/fh260/background/20240716/pngtree-colorful-light-bulb-with-paint-splatters-creative-and-vibrant-design-image_16008771.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', filter: 'contrast(1.2) brightness(1.1) saturate(1.3)'}}>
+    <div className="min-h-screen pt-24 pb-20 mt-20 relative" style={{backgroundImage: 'url(https://images.unsplash.com/photo-1557683316-973673baf926?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}>
       <div className="absolute inset-0 bg-black/40"></div>
       <div className="relative z-10 container mx-auto px-6 py-12">
         {/* Hero Section */}
