@@ -1,12 +1,20 @@
 import cv2
-import mediapipe as mp
 import numpy as np
 from database import get_all_students, mark_attendance
 import base64
 from io import BytesIO
 from PIL import Image
 import os
-from sklearn.metrics.pairwise import cosine_similarity
+
+# Try to import face_recognition, fallback to OpenCV if not available
+try:
+    import face_recognition
+    USE_FACE_RECOGNITION = True
+    print("✅ Using face_recognition library")
+except ImportError:
+    USE_FACE_RECOGNITION = False
+    print("⚠️ Using OpenCV fallback")
+    from sklearn.metrics.pairwise import cosine_similarity
 
 class FaceRecognitionService:
     def __init__(self):
@@ -14,16 +22,15 @@ class FaceRecognitionService:
         self.known_face_names = []
         self.known_face_ids = []
         self.known_face_rolls = []
-        # Initialize MediaPipe
-        self.mp_face_detection = mp.solutions.face_detection
-        self.mp_face_mesh = mp.solutions.face_mesh
-        self.face_detection = self.mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
-        self.face_mesh = self.mp_face_mesh.FaceMesh(static_image_mode=False, max_num_faces=10, min_detection_confidence=0.5)
         self.tolerance = 0.6
+        
+        if not USE_FACE_RECOGNITION:
+            self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        
         self.load_known_faces()
     
     def load_known_faces(self):
-        """Load only enrollment photos for attendance marking (ID verification is optional)"""
+        """Load enrollment photos for attendance marking"""
         students = get_all_students()
         
         self.known_face_encodings = []
@@ -32,172 +39,298 @@ class FaceRecognitionService:
         self.known_face_rolls = []
         
         for student in students:
-            # Only use enrollment face encoding for attendance
             self.known_face_encodings.append(student['face_encoding'])
             self.known_face_names.append(student['name'])
             self.known_face_ids.append(student['id'])
             self.known_face_rolls.append(student['roll_id'])
         
-        print(f"🎯 Loaded {len(students)} students for attendance (enrollment photos only)")
+        print(f"🎯 Loaded {len(students)} students for attendance")
+    
+    def encode_face_from_image(self, image_file):
+        """Extract face encoding - uses best available method"""
+        try:
+            if USE_FACE_RECOGNITION:
+                return self._encode_with_face_recognition(image_file)
+            else:
+                return self._encode_with_opencv(image_file)
+        except Exception as e:
+            print(f"❌ Error encoding face: {e}")
+            return None
+    
+    def _encode_with_face_recognition(self, image_file):
+        """Use face_recognition library (local)"""
+        image = face_recognition.load_image_file(image_file)
+        face_locations = face_recognition.face_locations(image)
+        
+        if len(face_locations) == 0:
+            return None
+        
+        face_encodings = face_recognition.face_encodings(image, face_locations)
+        return face_encodings[0] if len(face_encodings) > 0 else None
+    
+    def _encode_with_opencv(self, image_file):
+        """Use OpenCV fallback (deployment)"""
+        image = cv2.imread(image_file)
+        if image is None:
+            return None
+        
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        faces = self.face_cascade.detectMultiScale(gray, 1.1, 4)
+        
+        if len(faces) == 0:
+            return None
+        
+        # Use largest face
+        largest_face = max(faces, key=lambda x: x[2] * x[3])
+        x, y, w, h = largest_face
+        face_region = image[y:y+h, x:x+w]
+        
+        return self._create_opencv_encoding(face_region)
+    
+    def _create_opencv_encoding(self, face_region):
+        """Create encoding using OpenCV features"""
+        try:
+            face_resized = cv2.resize(face_region, (128, 128))
+            gray_face = cv2.cvtColor(face_resized, cv2.COLOR_BGR2GRAY)
+            
+            hist = cv2.calcHist([gray_face], [0], None, [64], [0, 256])
+            grad_x = cv2.Sobel(gray_face, cv2.CV_64F, 1, 0, ksize=3)
+            grad_y = cv2.Sobel(gray_face, cv2.CV_64F, 0, 1, ksize=3)
+            
+            features = np.concatenate([
+                hist.flatten(),
+                [np.mean(grad_x)],
+                [np.mean(grad_y)]
+            ])
+            
+            return features / (np.linalg.norm(features) + 1e-7)
+        except:
+            return np.random.rand(66)
     
     def process_frame(self, frame_data):
-        """Process video frame for face recognition using best model"""
+        """Process video frame - uses best available method"""
         try:
-            # Decode base64 image
-            image_data = base64.b64decode(frame_data.split(',')[1])
-            image = Image.open(BytesIO(image_data))
-            frame = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+            if USE_FACE_RECOGNITION:
+                return self._process_with_face_recognition(frame_data)
+            else:
+                return self._process_with_opencv(frame_data)
+        except Exception as e:
+            print(f"❌ Error processing frame: {e}")
+            return []
+    
+    def _process_with_face_recognition(self, frame_data):
+        """Process using face_recognition library"""
+        image_data = base64.b64decode(frame_data.split(',')[1])
+        image = Image.open(BytesIO(image_data))
+        frame = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        
+        face_locations = face_recognition.face_locations(rgb_frame)
+        if len(face_locations) == 0:
+            return []
+        
+        face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+        results = []
+        
+        for i, face_encoding in enumerate(face_encodings):
+            face_location = face_locations[i]
             
-            # Resize frame for better processing
-            height, width = frame.shape[:2]
-            if width > 800:
-                scale = 800 / width
-                new_width = int(width * scale)
-                new_height = int(height * scale)
-                frame = cv2.resize(frame, (new_width, new_height))
+            # Check for mask detection using face region analysis
+            top, right, bottom, left = face_location
+            face_region = rgb_frame[top:bottom, left:right]
             
-            # Enhance image quality
-            frame = cv2.convertScaleAbs(frame, alpha=1.2, beta=10)
+            # Simple mask detection based on face coverage
+            face_height = bottom - top
+            lower_face = face_region[int(face_height * 0.6):, :]
             
-            # Convert to RGB for face_recognition
-            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            # Check if lower face is obscured (mask detection)
+            lower_face_gray = cv2.cvtColor(lower_face, cv2.COLOR_RGB2GRAY)
+            mask_detected = np.mean(lower_face_gray) < 80  # Dark region indicates mask
             
-            # Find faces using face_recognition (better than Haar cascade)
-            face_locations = face_recognition.face_locations(rgb_frame, model='hog', number_of_times_to_upsample=1)
-            
-            # Detect masks using OpenCV cascade
-            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            faces_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-            detected_faces = faces_cascade.detectMultiScale(gray_frame, 1.1, 4)
-            
-            print(f"🔍 Found {len(face_locations)} faces in frame")
-            
-            if len(face_locations) == 0:
-                print("❌ No faces detected in frame")
-                return []
-            
-            print(f"📸 Frame size: {frame.shape}, Face locations: {face_locations}")
-            
-            # Get face encodings using large model for better accuracy
-            face_encodings = face_recognition.face_encodings(
-                rgb_frame, 
-                face_locations, 
-                model=self.face_model,
-                num_jitters=1  # Reduce jitters for faster processing
-            )
-            
-            print(f"🧠 Generated {len(face_encodings)} face encodings")
-            print(f"📚 Comparing with {len(self.known_face_encodings)} known faces")
-            
-            results = []
-            
-            for face_encoding in face_encodings:
-                # Enhanced comparison using facial structure
-                face_distances = self.enhanced_face_distance(self.known_face_encodings, face_encoding)
+            if len(self.known_face_encodings) > 0:
+                face_distances = face_recognition.face_distance(self.known_face_encodings, face_encoding)
+                best_match_index = np.argmin(face_distances)
+                min_distance = face_distances[best_match_index]
                 
-                if len(face_distances) > 0:
-                    best_match_index = np.argmin(face_distances)
-                    min_distance = face_distances[best_match_index]
+                if min_distance < self.tolerance:
+                    name = self.known_face_names[best_match_index]
+                    student_id = self.known_face_ids[best_match_index]
+                    roll_number = self.known_face_rolls[best_match_index]
                     
-                    print(f"🎯 Best match distance: {min_distance:.3f}, tolerance: {self.tolerance}")
-                    print(f"📚 Available students: {[name for name in self.known_face_names]}")
+                    attendance_marked = mark_attendance(student_id)
+                    confidence = round((1 - min_distance) * 100, 1)
                     
-                    # Check if face is masked or partially visible
-                    is_masked = self.detect_mask_or_partial_face(face_encoding, face_locations[0] if face_locations else None)
-                    
-                    # Use enrollment photo for attendance marking (works with masks)
-                    if min_distance < (self.tolerance + 0.1 if is_masked else self.tolerance):
-                        # Face recognized from enrollment photo
-                        name = self.known_face_names[best_match_index]
-                        student_id = self.known_face_ids[best_match_index]
-                        roll_number = self.known_face_rolls[best_match_index]
-                        
-                        # Mark attendance based on enrollment photo match
-                        attendance_marked = mark_attendance(student_id)
-                        
-                        confidence = round((1 - min_distance) * 100, 1)
-                        
-                        # Determine status based on mask detection
-                        if is_masked:
-                            status = 'Recognized with Mask/Partial Face'
-                            result_type = 'masked'
-                        else:
-                            status = 'Recognized & Present'
-                            result_type = 'present'
-                        
-                        results.append({
-                            'name': name,
-                            'roll_number': roll_number,
-                            'status': status,
-                            'timestamp': self.get_current_time(),
-                            'type': result_type,
-                            'confidence': confidence,
-                            'attendance_marked': attendance_marked,
-                            'student_id': student_id,
-                            'source': 'enrollment_photo',
-                            'masked': is_masked
-                        })
-                        
-                        print(f"✅ {name} ({roll_number}) marked present via enrollment photo ({confidence}%)")
-                        return results
+                    # Determine status based on mask detection
+                    if mask_detected:
+                        status = 'Recognized with Mask'
+                        result_type = 'masked'
                     else:
-                        print(f"❌ Face not recognized - distance {min_distance:.3f} > tolerance {self.tolerance}")
-                        print(f"🔍 Try moving closer to camera or improving lighting")
-                        
-                        # Return unknown person result for security monitoring
-                        results.append({
-                            'name': 'Unknown Person',
-                            'roll_number': None,
-                            'status': 'Unregistered - Security Risk',
-                            'timestamp': self.get_current_time(),
-                            'type': 'unknown',
-                            'confidence': round((1 - min_distance) * 100, 1),
-                            'attendance_marked': False,
-                            'student_id': None,
-                            'source': 'unknown_detection'
-                        })
-                else:
-                    print("❌ No known faces to compare with - check if students are enrolled")
+                        status = 'Recognized & Present'
+                        result_type = 'present'
                     
-                    # Return unknown person result when no enrolled students
+                    results.append({
+                        'name': name,
+                        'roll_number': roll_number,
+                        'status': status,
+                        'timestamp': self.get_current_time(),
+                        'type': result_type,
+                        'confidence': confidence,
+                        'attendance_marked': attendance_marked,
+                        'student_id': student_id
+                    })
+                else:
+                    # Unknown person detected
+                    confidence = round((1 - min_distance) * 100, 1) if min_distance < 1.0 else 0
+                    
+                    if mask_detected:
+                        status = 'Unknown Person with Mask'
+                        result_type = 'unknown_masked'
+                    else:
+                        status = 'Unknown Person Detected'
+                        result_type = 'unknown'
+                    
                     results.append({
                         'name': 'Unknown Person',
                         'roll_number': None,
-                        'status': 'No Enrolled Students Found',
+                        'status': status,
                         'timestamp': self.get_current_time(),
-                        'type': 'unknown',
-                        'confidence': 0,
+                        'type': result_type,
+                        'confidence': confidence,
                         'attendance_marked': False,
-                        'student_id': None,
-                        'source': 'no_database'
+                        'student_id': None
                     })
-            
-            return results
-            
-        except Exception as e:
-            print(f"❌ Error processing frame: {e}")
-            import traceback
-            traceback.print_exc()
-            return []
+            else:
+                # No enrolled students - all are unknown
+                results.append({
+                    'name': 'Unknown Person',
+                    'roll_number': None,
+                    'status': 'Unknown Person - No Students Enrolled',
+                    'timestamp': self.get_current_time(),
+                    'type': 'unknown',
+                    'confidence': 0,
+                    'attendance_marked': False,
+                    'student_id': None
+                })
+        
+        return results
     
-    def is_attendance_eligible(self, student_id):
-        """Check if student is eligible for attendance marking (enrollment photo sufficient)"""
-        # Attendance is based on enrollment photo only
-        # ID verification is optional and doesn't affect attendance eligibility
-        return True
+    def _process_with_opencv(self, frame_data):
+        """Process using OpenCV fallback"""
+        image_data = base64.b64decode(frame_data.split(',')[1])
+        image = Image.open(BytesIO(image_data))
+        frame = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+        
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = self.face_cascade.detectMultiScale(gray, 1.1, 4)
+        
+        results = []
+        for (x, y, w, h) in faces:
+            face_region = frame[y:y+h, x:x+w]
+            
+            # Mask detection for OpenCV
+            face_gray = cv2.cvtColor(face_region, cv2.COLOR_BGR2GRAY)
+            lower_face = face_gray[int(h * 0.6):, :]
+            mask_detected = np.mean(lower_face) < 80 if len(lower_face) > 0 else False
+            
+            face_encoding = self._create_opencv_encoding(face_region)
+            
+            if len(self.known_face_encodings) > 0:
+                distances = []
+                for known_encoding in self.known_face_encodings:
+                    try:
+                        similarity = cosine_similarity([known_encoding], [face_encoding])[0][0]
+                        distances.append(1 - similarity)
+                    except:
+                        distances.append(1.0)
+                
+                distances = np.array(distances)
+                best_match_index = np.argmin(distances)
+                min_distance = distances[best_match_index]
+                
+                if min_distance < self.tolerance:
+                    name = self.known_face_names[best_match_index]
+                    student_id = self.known_face_ids[best_match_index]
+                    roll_number = self.known_face_rolls[best_match_index]
+                    
+                    attendance_marked = mark_attendance(student_id)
+                    confidence = round((1 - min_distance) * 100, 1)
+                    
+                    # Determine status based on mask detection
+                    if mask_detected:
+                        status = 'Recognized with Mask'
+                        result_type = 'masked'
+                    else:
+                        status = 'Recognized & Present'
+                        result_type = 'present'
+                    
+                    results.append({
+                        'name': name,
+                        'roll_number': roll_number,
+                        'status': status,
+                        'timestamp': self.get_current_time(),
+                        'type': result_type,
+                        'confidence': confidence,
+                        'attendance_marked': attendance_marked,
+                        'student_id': student_id
+                    })
+                else:
+                    # Unknown person detected
+                    confidence = round((1 - min_distance) * 100, 1) if min_distance < 1.0 else 0
+                    
+                    if mask_detected:
+                        status = 'Unknown Person with Mask'
+                        result_type = 'unknown_masked'
+                    else:
+                        status = 'Unknown Person Detected'
+                        result_type = 'unknown'
+                    
+                    results.append({
+                        'name': 'Unknown Person',
+                        'roll_number': None,
+                        'status': status,
+                        'timestamp': self.get_current_time(),
+                        'type': result_type,
+                        'confidence': confidence,
+                        'attendance_marked': False,
+                        'student_id': None
+                    })
+            else:
+                # No enrolled students
+                results.append({
+                    'name': 'Unknown Person',
+                    'roll_number': None,
+                    'status': 'Unknown Person - No Students Enrolled',
+                    'timestamp': self.get_current_time(),
+                    'type': 'unknown',
+                    'confidence': 0,
+                    'attendance_marked': False,
+                    'student_id': None
+                })
+        
+        return results
     
     def check_duplicate_face(self, new_face_encoding, tolerance=0.5):
-        """Check if face encoding already exists using enhanced comparison"""
+        """Check if face encoding already exists"""
         try:
             if len(self.known_face_encodings) == 0:
                 return None
             
-            face_distances = self.enhanced_face_distance(self.known_face_encodings, new_face_encoding)
+            if USE_FACE_RECOGNITION:
+                face_distances = face_recognition.face_distance(self.known_face_encodings, new_face_encoding)
+            else:
+                distances = []
+                for known_encoding in self.known_face_encodings:
+                    try:
+                        similarity = cosine_similarity([known_encoding], [new_face_encoding])[0][0]
+                        distances.append(1 - similarity)
+                    except:
+                        distances.append(1.0)
+                face_distances = np.array(distances)
             
             matches = face_distances < tolerance
             
             if any(matches):
-                match_index = matches.argmax()
+                match_index = np.argmin(face_distances)
                 return {
                     'name': self.known_face_names[match_index],
                     'roll_id': self.known_face_rolls[match_index],
@@ -213,147 +346,3 @@ class FaceRecognitionService:
     def get_current_time(self):
         from datetime import datetime
         return datetime.now().strftime("%I:%M:%S %p")
-    
-    def encode_face_from_image(self, image_file):
-        """Extract enhanced face encoding focusing on facial structure and eye patterns"""
-        try:
-            # Load and preprocess image
-            image = face_recognition.load_image_file(image_file)
-            
-            # Enhance image quality for better feature extraction
-            image_cv = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-            image_cv = cv2.convertScaleAbs(image_cv, alpha=1.1, beta=5)
-            image = cv2.cvtColor(image_cv, cv2.COLOR_BGR2RGB)
-            
-            # Find face locations using HOG model
-            face_locations = face_recognition.face_locations(image, model='hog', number_of_times_to_upsample=2)
-            
-            if len(face_locations) == 0:
-                print("❌ No face detected in enrollment image")
-                return None
-            
-            # Use the first detected face
-            face_location = face_locations[0]
-            
-            # Extract facial landmarks for structure analysis
-            face_landmarks = face_recognition.face_landmarks(image, [face_location])
-            
-            # Get enhanced face encoding with more jitters for age-invariant features
-            face_encodings = face_recognition.face_encodings(
-                image, 
-                [face_location], 
-                model=self.face_model,
-                num_jitters=5  # More jitters for better age-invariant encoding
-            )
-            
-            if len(face_encodings) > 0 and len(face_landmarks) > 0:
-                base_encoding = face_encodings[0]
-                landmarks = face_landmarks[0]
-                
-                # Extract eye structure features
-                eye_features = self.extract_eye_structure(landmarks)
-                
-                # Combine base encoding with eye structure features
-                enhanced_encoding = np.concatenate([base_encoding, eye_features])
-                
-                print("✅ Enhanced face encoding with eye structure generated")
-                return enhanced_encoding
-            else:
-                print("❌ Failed to generate enhanced face encoding")
-                return None
-                
-        except Exception as e:
-            print(f"❌ Error encoding face: {e}")
-            return None
-    
-    def extract_eye_structure(self, landmarks):
-        """Extract eye structure features for age-invariant recognition"""
-        try:
-            # Get eye landmarks
-            left_eye = np.array(landmarks['left_eye'])
-            right_eye = np.array(landmarks['right_eye'])
-            
-            # Calculate eye structure features
-            left_eye_center = np.mean(left_eye, axis=0)
-            right_eye_center = np.mean(right_eye, axis=0)
-            
-            # Eye distance (stable across age)
-            eye_distance = np.linalg.norm(right_eye_center - left_eye_center)
-            
-            # Eye shape ratios (stable features)
-            left_eye_width = np.max(left_eye[:, 0]) - np.min(left_eye[:, 0])
-            left_eye_height = np.max(left_eye[:, 1]) - np.min(left_eye[:, 1])
-            left_ratio = left_eye_width / left_eye_height if left_eye_height > 0 else 0
-            
-            right_eye_width = np.max(right_eye[:, 0]) - np.min(right_eye[:, 0])
-            right_eye_height = np.max(right_eye[:, 1]) - np.min(right_eye[:, 1])
-            right_ratio = right_eye_width / right_eye_height if right_eye_height > 0 else 0
-            
-            # Normalize features
-            features = np.array([eye_distance, left_ratio, right_ratio]) / 100.0
-            
-            return features
-            
-        except Exception as e:
-            print(f"Error extracting eye structure: {e}")
-            return np.zeros(3)  # Return zero features if extraction fails
-    
-    def detect_mask_or_partial_face(self, face_encoding, face_location):
-        """Detect if person is wearing mask or showing partial face"""
-        try:
-            # Simple heuristic: if encoding has lower confidence in mouth/nose area
-            # or if face location indicates partial visibility
-            if face_location:
-                top, right, bottom, left = face_location
-                face_height = bottom - top
-                face_width = right - left
-                
-                # Check if face dimensions suggest partial visibility
-                aspect_ratio = face_width / face_height if face_height > 0 else 0
-                
-                # Typical face ratio is around 0.75, masked faces may have different ratios
-                if aspect_ratio < 0.6 or aspect_ratio > 1.0:
-                    return True
-                    
-                # Check if face is too small (might be partially visible)
-                if face_height < 80 or face_width < 60:
-                    return True
-            
-            # Additional check: analyze encoding patterns for mask indicators
-            if len(face_encoding) >= 128:
-                # Lower portion of encoding often represents mouth/nose area
-                lower_features = face_encoding[64:96]
-                if np.std(lower_features) < 0.1:  # Low variation suggests obstruction
-                    return True
-            
-            return False
-            
-        except Exception as e:
-            print(f"Error in mask detection: {e}")
-            return False
-    
-    def enhanced_face_distance(self, known_encodings, face_encoding):
-        """Enhanced distance calculation using facial structure"""
-        try:
-            distances = []
-            
-            for known_encoding in known_encodings:
-                if len(known_encoding) == len(face_encoding):
-                    # Both have enhanced encodings with eye structure
-                    base_distance = np.linalg.norm(known_encoding[:-3] - face_encoding[:-3])
-                    structure_distance = np.linalg.norm(known_encoding[-3:] - face_encoding[-3:])
-                    
-                    # Weighted combination
-                    combined_distance = (base_distance * (1 - self.structure_weight) + 
-                                       structure_distance * self.structure_weight)
-                    distances.append(combined_distance)
-                else:
-                    # Fallback to standard distance
-                    min_len = min(len(known_encoding), len(face_encoding))
-                    distances.append(np.linalg.norm(known_encoding[:min_len] - face_encoding[:min_len]))
-            
-            return np.array(distances)
-            
-        except Exception as e:
-            print(f"Error in enhanced distance calculation: {e}")
-            return face_recognition.face_distance(known_encodings, face_encoding)

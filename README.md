@@ -244,7 +244,7 @@ npm start
 
 **Access Your Application:**
 - 🌐 **Frontend:** https://neuroattend.vercel.app  
-- 🔧 **Backend API:** http://localhost:8080  
+- 🔧 **Backend API:** https://neuroattend-dev.onrender.com  
 
 <br>
 
@@ -294,15 +294,15 @@ npm start
 ## 🌐 API Endpoints
 
 ```bash
-# Backend API (Port 8080)
-POST /enroll                    # Student enrollment
-POST /bulk-enroll              # Bulk student enrollment
-POST /recognize                # Face recognition
-POST /verify-id                # ID card verification
-POST /send-email-alerts        # Email notifications
-POST /send-whatsapp-alerts     # WhatsApp notifications
-GET  /export-attendance-csv    # Export attendance data
-GET  /stats                    # Attendance statistics
+# Backend API (Production)
+POST https://neuroattend-dev.onrender.com/enroll                    # Student enrollment
+POST https://neuroattend-dev.onrender.com/bulk-enroll              # Bulk student enrollment
+POST https://neuroattend-dev.onrender.com/recognize                # Face recognition
+POST https://neuroattend-dev.onrender.com/verify-id                # ID card verification
+POST https://neuroattend-dev.onrender.com/send-email-alerts        # Email notifications
+POST https://neuroattend-dev.onrender.com/send-whatsapp-alerts     # WhatsApp notifications
+GET  https://neuroattend-dev.onrender.com/export-attendance-csv    # Export attendance data
+GET  https://neuroattend-dev.onrender.com/stats                    # Attendance statistics
 ```
 <br>
 
@@ -312,11 +312,11 @@ GET  /stats                    # Attendance statistics
 
 ```bash
 # Test API endpoints
-curl http://localhost:8080/stats
-curl http://localhost:8080/
+curl https://neuroattend-dev.onrender.com/stats
+curl https://neuroattend-dev.onrender.com/
 
 # Test frontend
-cd frontend && npm start
+open https://neuroattend.vercel.app
 ```
 
 ## ⚠️ Common Issues

@@ -67,7 +67,7 @@ const About = () => {
             <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">AI Platform</span>
           </h1>
           <p className="text-2xl text-gray-700 max-w-5xl mx-auto leading-relaxed font-medium mb-8">
-Professional AI-powered attendance system with student enrollment, live facial recognition, ID verification, automated absence alerts, and comprehensive student information management.
+            Professional AI-powered attendance system with student enrollment, live facial recognition, ID verification, automated absence alerts, and comprehensive student information management.
           </p>
           <div className="grid md:grid-cols-3 gap-6 mt-12">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl">
@@ -92,10 +92,10 @@ Professional AI-powered attendance system with student enrollment, live facial r
             <div>
               <h3 className="text-3xl font-bold text-gray-800 mb-6">Intelligent Workforce Management</h3>
               <p className="text-lg text-gray-700 leading-relaxed mb-6">
-NeuroAttend provides a complete attendance management solution for educational institutions. Features include student enrollment with photo management, live camera recognition, ID card verification, automated absence email alerts, and organized student information folders.
+                NeuroAttend provides a complete attendance management solution for educational institutions. Features include student enrollment with photo management, live camera recognition, ID card verification, automated absence email alerts, and organized student information folders.
               </p>
               <p className="text-lg text-gray-700 leading-relaxed mb-6">
-Built with React frontend and FastAPI backend, the system provides real-time facial recognition, bulk enrollment from CSV files, professional absence notifications, and comprehensive student data organization with automated folder creation.
+                Built with React frontend and FastAPI backend, the system provides real-time facial recognition, bulk enrollment from CSV files, professional absence notifications, and comprehensive student data organization with automated folder creation.
               </p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-blue-50 p-4 rounded-xl">
@@ -238,8 +238,8 @@ Built with React frontend and FastAPI backend, the system provides real-time fac
               <div key={index} className="bg-white/20 backdrop-blur-lg border border-white/30 rounded-3xl p-10 transition-all duration-500 hover:transform hover:scale-105 hover:shadow-2xl group">
                 <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-8 group-hover:rotate-12 transition-transform duration-300">
                   {index === 0 && <span className="text-4xl">🏫</span>}
-                  {index === 1 && <span className="text-4xl">🏬</span>}
-                  {index === 2 && <span className="text-4xl">🎲</span>}
+                  {index === 1 && <span className="text-4xl">🏢</span>}
+                  {index === 2 && <span className="text-4xl">🎯</span>}
                 </div>
                 <h3 className="text-2xl font-bold text-white mb-4">{useCase.title}</h3>
                 <p className="text-white/80 leading-relaxed text-lg">{useCase.description}</p>

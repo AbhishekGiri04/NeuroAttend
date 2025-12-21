@@ -56,7 +56,7 @@ const LiveFeed = () => {
         const frameData = canvas.toDataURL('image/jpeg', 0.95);
         
         // Send to backend for recognition
-        const response = await fetch('http://localhost:8080/recognize', {
+        const response = await fetch('https://neuroattend-dev.onrender.com/recognize', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -70,7 +70,12 @@ const LiveFeed = () => {
             console.log('✅ Recognition results:', data.results);
             
             // Check for unknown persons
-            const unknownPersons = data.results.filter(r => r.type === 'unknown' || !r.roll_number);
+            const unknownPersons = data.results.filter(r => 
+              r.type === 'unknown' || 
+              r.type === 'unknown_masked' || 
+              !r.roll_number || 
+              r.name === 'Unknown Person'
+            );
             
             if (unknownPersons.length > 0) {
               setUnknownDetections(prev => {
@@ -147,7 +152,7 @@ const LiveFeed = () => {
       const sessionTime = new Date().toISOString();
       const presentStudents = Array.from(sessionStudents);
       
-      const response = await fetch('http://localhost:8080/mark-class-attendance', {
+      const response = await fetch('https://neuroattend-dev.onrender.com/mark-class-attendance', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -479,14 +484,18 @@ const LiveFeed = () => {
                   <div key={index} className={`p-5 rounded-2xl border transition-all duration-300 ${
                     result.type === 'present' ? 'bg-emerald-500/20 border-emerald-500/30 shadow-lg' :
                     result.type === 'masked' ? 'bg-amber-500/20 border-amber-500/30 shadow-lg' :
-                    'bg-red-500/20 border-red-500/30 shadow-lg'
+                    result.type === 'unknown_masked' ? 'bg-orange-500/20 border-orange-500/30 shadow-lg' :
+                    result.type === 'unknown' ? 'bg-red-500/20 border-red-500/30 shadow-lg' :
+                    'bg-slate-500/20 border-slate-500/30 shadow-lg'
                   }`}>
                     <div className="flex items-center justify-between mb-3">
                       <div className="font-bold text-white text-lg">{result.name}</div>
                       <div className={`w-4 h-4 rounded-full animate-pulse ${
                         result.type === 'present' ? 'bg-emerald-400' :
                         result.type === 'masked' ? 'bg-amber-400' :
-                        'bg-red-400'
+                        result.type === 'unknown_masked' ? 'bg-orange-400' :
+                        result.type === 'unknown' ? 'bg-red-400' :
+                        'bg-slate-400'
                       }`}></div>
                     </div>
                     
@@ -494,7 +503,9 @@ const LiveFeed = () => {
                       <div className={`text-sm font-semibold ${
                         result.type === 'present' ? 'text-emerald-300' :
                         result.type === 'masked' ? 'text-amber-300' :
-                        'text-red-300'
+                        result.type === 'unknown_masked' ? 'text-orange-300' :
+                        result.type === 'unknown' ? 'text-red-300' :
+                        'text-slate-300'
                       }`}>{result.status}</div>
                       
                       {result.roll_number && (
@@ -540,6 +551,12 @@ const LiveFeed = () => {
                   <div className="flex items-center">
                     <div className="w-4 h-4 bg-amber-500 rounded-full mr-3 shadow-lg"></div>
                     <span className="text-amber-300 font-medium">Masked/Partial Face</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-orange-500/10 rounded-xl border border-orange-500/20">
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-orange-500 rounded-full mr-3 shadow-lg"></div>
+                    <span className="text-orange-300 font-medium">Unknown with Mask</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-red-500/10 rounded-xl border border-red-500/20">

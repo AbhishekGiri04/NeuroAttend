@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
+import numpy as np
 from database import init_database, save_student, get_attendance_stats, get_all_students, mark_attendance, get_present_students_by_date
 from face_recognition_service import FaceRecognitionService
 from id_verification_service import IDVerificationService
@@ -35,8 +36,18 @@ async def root():
 
 # Initialize database and services
 print("Initializing database...")
-init_database()
-print("Database initialized successfully")
+try:
+    init_database()
+    print("Database initialized successfully")
+except Exception as e:
+    print(f"Database initialization error: {e}")
+    # Force create database directory and file
+    import os
+    db_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database')
+    os.makedirs(db_dir, exist_ok=True)
+    init_database()
+    print("Database created successfully")
+
 face_service = FaceRecognitionService()
 id_verification_service = IDVerificationService()
 student_db = StudentDB()
@@ -46,12 +57,21 @@ async def startup_event():
     print("🚀 NeuroAttend API Started")
     print("🤖 Face Recognition Service Initialized")
     print("🆔 ID Verification Service Ready")
-    # Ensure database is properly initialized
+    # Force database initialization
     try:
+        import os
+        db_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database')
+        os.makedirs(db_dir, exist_ok=True)
         init_database()
         print("✅ Database tables verified")
     except Exception as e:
         print(f"❌ Database initialization error: {e}")
+        # Try to create database again
+        try:
+            init_database()
+            print("✅ Database created on retry")
+        except Exception as retry_error:
+            print(f"❌ Database retry failed: {retry_error}")
 
 @app.post("/enroll")
 async def enroll_student(
@@ -457,4 +477,5 @@ async def verify_id_card(
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
+    print(f"🚀 Starting NeuroAttend on port {port}")
     uvicorn.run(app, host="0.0.0.0", port=port)

@@ -52,7 +52,7 @@ const Admin = () => {
       const formData = new FormData();
       formData.append('date', alertDate);
       
-      const response = await fetch('http://localhost:8080/send-email-alerts', {
+      const response = await fetch('https://neuroattend-dev.onrender.com/send-email-alerts', {
         method: 'POST',
         body: formData
       });
@@ -87,7 +87,7 @@ const Admin = () => {
       const formData = new FormData();
       formData.append('date', alertDate);
       
-      const response = await fetch('http://localhost:8080/send-whatsapp-alerts', {
+      const response = await fetch('https://neuroattend-dev.onrender.com/send-whatsapp-alerts', {
         method: 'POST',
         body: formData
       });
@@ -114,7 +114,7 @@ const Admin = () => {
     if (!exportDate) return alert('Please select a date');
     
     try {
-      const response = await fetch(`http://localhost:8080/export-attendance-csv?date=${exportDate}&type=${type}`);
+      const response = await fetch(`https://neuroattend-dev.onrender.com/export-attendance-csv?date=${exportDate}&type=${type}`);
       
       if (response.ok) {
         const blob = await response.blob();

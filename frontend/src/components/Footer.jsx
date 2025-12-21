@@ -72,7 +72,7 @@ const Footer = () => {
               </div>
             </div>
             <p className="text-gray-300 mb-6 leading-relaxed">
-Professional AI-powered attendance system with student enrollment, live facial recognition, 
+              Professional AI-powered attendance system with student enrollment, live facial recognition, 
               ID verification, automated absence alerts, and comprehensive student information management.
             </p>
             <div className="flex space-x-4">
@@ -154,7 +154,7 @@ Professional AI-powered attendance system with student enrollment, live facial r
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-gray-700 flex flex-col md:flex-row justify-between items-center">
           <div className="text-gray-400 text-sm mb-4 md:mb-0">
-© 2025 NeuroAttend AI System. Built by Abhishek Giri for intelligent attendance management.
+            © 2025 NeuroAttend AI System. Built by Abhishek Giri for intelligent attendance management.
           </div>
           <div className="flex items-center space-x-6 text-sm">
             <a href="#" className="footer-link">Privacy Policy</a>

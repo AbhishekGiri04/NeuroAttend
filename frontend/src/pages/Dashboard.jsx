@@ -21,19 +21,22 @@ const Dashboard = () => {
 
   const loadDashboard = async () => {
     try {
-      const response = await fetch('http://localhost:8080/stats');
+      const response = await fetch('https://neuroattend-dev.onrender.com/stats');
       if (response.ok) {
         const data = await response.json();
         setStats(data);
+        console.log('📊 Dashboard stats loaded:', data);
+      } else {
+        console.error('Failed to load stats:', response.status);
       }
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
     }
   };
 
-  // Refresh stats every 30 seconds
+  // Refresh stats every 10 seconds for faster updates
   useEffect(() => {
-    const interval = setInterval(loadDashboard, 30000);
+    const interval = setInterval(loadDashboard, 10000);
     return () => clearInterval(interval);
   }, []);
 

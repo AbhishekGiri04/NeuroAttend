@@ -8,8 +8,11 @@ lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 lsof -ti:8080 | xargs kill -9 2>/dev/null || true
 
 # Start backend
-echo "Starting FastAPI backend..."
+echo "Initializing database..."
 cd backend
+python init_db.py
+
+echo "Starting FastAPI backend..."
 python -m uvicorn app:app --host 0.0.0.0 --port 8080 --reload &
 BACKEND_PID=$!
 

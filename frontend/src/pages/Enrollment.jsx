@@ -50,7 +50,7 @@ const Enrollment = () => {
     formData.append('file', individualForm.photo);
     
     try {
-      const response = await fetch('http://localhost:8080/enroll', {
+      const response = await fetch('https://neuroattend-dev.onrender.com/enroll', {
         method: 'POST',
         body: formData
       });
@@ -88,7 +88,7 @@ const Enrollment = () => {
     }
     
     try {
-      const response = await fetch('http://localhost:8080/bulk-enroll', {
+      const response = await fetch('https://neuroattend-dev.onrender.com/bulk-enroll', {
         method: 'POST',
         body: formData
       });
@@ -128,7 +128,7 @@ const Enrollment = () => {
     formData.append('file', idVerifyForm.idCard);
     
     try {
-      const response = await fetch('http://localhost:8080/verify-id', {
+      const response = await fetch('https://neuroattend-dev.onrender.com/verify-id', {
         method: 'POST',
         body: formData
       });

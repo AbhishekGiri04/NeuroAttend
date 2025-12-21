@@ -77,6 +77,7 @@ frontend/logs/
 *.tmp
 *.temp
 *.bak
+tempCodeRunnerFile.*
 
 # Environment Variables
 .env
