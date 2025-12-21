@@ -54,7 +54,7 @@ const About = () => {
   ];
 
   return (
-    <div className="min-h-screen pt-24 pb-20 mt-20 relative bg-gradient-to-b from-pink-200 via-pink-100 to-white">
+    <div className="min-h-screen pt-24 pb-20 mt-20 relative bg-pink-400">
       <div className="absolute inset-0 bg-black/40"></div>
       <div className="relative z-10 container mx-auto px-6 py-12">
         {/* Hero Section */}
