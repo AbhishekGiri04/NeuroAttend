@@ -13,7 +13,7 @@ try:
     print("✅ Using face_recognition library")
 except ImportError:
     USE_FACE_RECOGNITION = False
-    print("⚠️ Using OpenCV fallback")
+    print("⚠️ Using OpenCV fallback for production deployment")
     from sklearn.metrics.pairwise import cosine_similarity
 
 class FaceRecognitionService:
