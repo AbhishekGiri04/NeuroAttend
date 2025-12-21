@@ -143,6 +143,79 @@ const Admin = () => {
     }
   };
 
+  const resetDatabase = async () => {
+    // Show professional confirmation dialog
+    const confirmReset = () => {
+      return new Promise((resolve) => {
+        const confirmDiv = document.createElement('div');
+        confirmDiv.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
+        confirmDiv.innerHTML = `
+          <div class="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl">
+            <div class="flex items-center mb-6">
+              <div class="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mr-4">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-gray-900">Confirm Database Reset</h3>
+            </div>
+            <p class="text-gray-700 mb-6 leading-relaxed">
+              Are you sure you want to reset the database? This will delete <strong>ALL students and attendance records permanently</strong>. This action cannot be undone.
+            </p>
+            <div class="flex space-x-4">
+              <button id="cancelReset" class="flex-1 bg-gray-200 text-gray-800 py-3 px-4 rounded-lg font-semibold hover:bg-gray-300 transition-all">
+                Cancel
+              </button>
+              <button id="confirmReset" class="flex-1 bg-red-500 text-white py-3 px-4 rounded-lg font-semibold hover:bg-red-600 transition-all">
+                Reset Database
+              </button>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(confirmDiv);
+        
+        document.getElementById('cancelReset').onclick = () => {
+          document.body.removeChild(confirmDiv);
+          resolve(false);
+        };
+        
+        document.getElementById('confirmReset').onclick = () => {
+          document.body.removeChild(confirmDiv);
+          resolve(true);
+        };
+      });
+    };
+    
+    const confirmed = await confirmReset();
+    if (!confirmed) return;
+    
+    try {
+      const response = await fetch('https://neuroattend-dev.onrender.com/reset-database', {
+        method: 'POST'
+      });
+      
+      if (response.ok) {
+        showProfessionalNotification({
+          title: 'Database Reset Successfully',
+          message: 'All students and attendance records have been deleted permanently. Dashboard will refresh automatically.',
+          type: 'success',
+          duration: 3000
+        });
+        
+        // Refresh dashboard after 2 seconds
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        const error = await response.json();
+        alert(error.detail || 'Failed to reset database');
+      }
+    } catch (err) {
+      alert('Network error: ' + err.message);
+    }
+  };
+
   return (
     <div className="min-h-screen pt-24 pb-20 mt-20 relative" style={{backgroundImage: 'url(https://img.freepik.com/free-photo/yellow-paper-cutout-light-bulb-blank-blackboard_23-2147873862.jpg?semt=ais_hybrid&w=740&q=80)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}>
       <div className="absolute inset-0 bg-black/50"></div>
@@ -165,7 +238,7 @@ const Admin = () => {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-10 max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-10 max-w-5xl mx-auto">
 
           
           {/* WhatsApp Alerts */}
@@ -231,6 +304,27 @@ const Admin = () => {
                   Export All
                 </button>
               </div>
+            </div>
+          </div>
+          
+          {/* Reset Database */}
+          <div className="bg-white/20 backdrop-blur-md p-8 rounded-3xl shadow-2xl border border-white/30 hover:bg-white/25 transition-all duration-300">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-rose-500 rounded-xl flex items-center justify-center mr-3">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white">Reset Database</h3>
+            </div>
+            <div className="space-y-4">
+              <p className="text-white/80 text-sm">⚠️ This will delete all students and attendance records permanently.</p>
+              <button 
+                onClick={resetDatabase}
+                className="w-full bg-gradient-to-r from-red-500 to-rose-500 text-white py-3 px-4 rounded-lg font-semibold hover:from-red-600 hover:to-rose-600 transition-all"
+              >
+                Reset Database
+              </button>
             </div>
           </div>
         </div>

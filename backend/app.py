@@ -475,6 +475,38 @@ async def verify_id_card(
 
 
 
+@app.post("/reset-database")
+async def reset_database():
+    """Reset database - Delete all students and attendance records"""
+    try:
+        db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database', 'attendance.db')
+        
+        # Delete the database file completely
+        if os.path.exists(db_path):
+            os.remove(db_path)
+        
+        # Recreate fresh database
+        init_database()
+        
+        # Clear student data folders
+        database_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database')
+        for item in os.listdir(database_dir):
+            item_path = os.path.join(database_dir, item)
+            if os.path.isdir(item_path) and item != '__pycache__':
+                import shutil
+                shutil.rmtree(item_path)
+        
+        # Reload known faces (will be empty now)
+        face_service.load_known_faces()
+        
+        return JSONResponse({
+            "message": "Database reset successfully. All students and attendance records deleted. Fresh database created.",
+            "status": "success"
+        })
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     print(f"🚀 Starting NeuroAttend on port {port}")
