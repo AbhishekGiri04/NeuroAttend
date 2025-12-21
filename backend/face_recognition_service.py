@@ -1,11 +1,12 @@
 import cv2
-import face_recognition
+import mediapipe as mp
 import numpy as np
 from database import get_all_students, mark_attendance
 import base64
 from io import BytesIO
 from PIL import Image
 import os
+from sklearn.metrics.pairwise import cosine_similarity
 
 class FaceRecognitionService:
     def __init__(self):
@@ -13,13 +14,12 @@ class FaceRecognitionService:
         self.known_face_names = []
         self.known_face_ids = []
         self.known_face_rolls = []
-        # Load Haar cascade for face detection
-        cascade_path = os.path.join(os.path.dirname(__file__), 'haarcascade_frontalface_default.xml')
-        self.face_cascade = cv2.CascadeClassifier(cascade_path)
-        # Enhanced model for facial structure recognition
-        self.face_model = 'large'  # Use large model for better accuracy
-        self.tolerance = 0.6  # Balanced tolerance for age-invariant recognition
-        self.structure_weight = 0.7  # Weight for facial structure features
+        # Initialize MediaPipe
+        self.mp_face_detection = mp.solutions.face_detection
+        self.mp_face_mesh = mp.solutions.face_mesh
+        self.face_detection = self.mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
+        self.face_mesh = self.mp_face_mesh.FaceMesh(static_image_mode=False, max_num_faces=10, min_detection_confidence=0.5)
+        self.tolerance = 0.6
         self.load_known_faces()
     
     def load_known_faces(self):
