@@ -210,8 +210,8 @@ NeuroAttend/
 
 ```bash
 # Clone the repository
-git clone https://github.com/AbhishekGiri04/NeuroAttend-Attendance_Management_System.git
-cd NeuroAttend-Attendance_Management_System
+git clone https://github.com/AbhishekGiri04/NeuroAttend.git
+cd NeuroAttend
 
 # Install backend dependencies
 cd backend
