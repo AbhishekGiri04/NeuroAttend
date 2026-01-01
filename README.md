@@ -174,6 +174,7 @@ NeuroAttend/
 ├── 📄 .gitignore                 # 🚫 Git ignore rules (optimized)
 ├── 📄 .dockerignore             # 🚫 Docker ignore rules
 ├── 📄 Dockerfile                 # 🐳 Container configuration
+├── 📄 LICENSE                    # 📜 MIT License file
 ├── 📄 render.yaml               # ☁️ Render deployment config
 ├── 📄 start.sh                  # 🚀 Single command startup script
 └── 📄 README.md                 # 📖 Project documentation
@@ -363,36 +364,37 @@ cd frontend && rm -rf node_modules && npm install
 
 ---  
 
-## 📞 Help & Contact  
+## 📞 Help & Contact
 
-> 💬 *Got questions or want to collaborate on NeuroAttend?*  
-> We're here to help transform attendance management!
-
-<div align="center">
+💬 *Got questions or need assistance with NeuroAttend? We're here to help with integration and customization!*
 
 **👤 Abhishek Giri**  
 <a href="https://www.linkedin.com/in/abhishek-giri04/">
-  <img src="https://img.shields.io/badge/Connect%20on-LinkedIn-blue?style=for-the-badge&logo=linkedin" alt="LinkedIn - Abhishek Giri"/>
+  <img src="https://img.shields.io/badge/LinkedIn-Abhishek%20Giri-blue?style=for-the-badge&logo=linkedin" alt="LinkedIn - Abhishek Giri"/>  
 </a>  
 <a href="https://github.com/abhishekgiri04">
-  <img src="https://img.shields.io/badge/Follow%20on-GitHub-black?style=for-the-badge&logo=github" alt="GitHub - Abhishek Giri"/>
+  <img src="https://img.shields.io/badge/GitHub-Abhishek%20Giri-black?style=for-the-badge&logo=github" alt="GitHub - Abhishek Giri"/>  
 </a>  
 <a href="https://t.me/AbhishekGiri7">
-  <img src="https://img.shields.io/badge/Chat%20on-Telegram-blue?style=for-the-badge&logo=telegram" alt="Telegram - Abhishek Giri"/>
+  <img src="https://img.shields.io/badge/Telegram-Abhishek%20Giri-blue?style=for-the-badge&logo=telegram" alt="Telegram - Abhishek Giri"/>  
 </a>
 
-<br/>
+<br>
 
 ---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+<div align="center">
 
 **🚀 Let's build the future of intelligent attendance systems! 🧠✨**  
 *Built with ❤️ using React, FastAPI & Advanced AI*
 
-</div>
-
 ---
-
-<div align="center">
 
 **© 2025 NeuroAttend AI System. All Rights Reserved.**
 
