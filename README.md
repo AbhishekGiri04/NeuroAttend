@@ -116,8 +116,6 @@ NeuroAttend is a revolutionary AI-powered attendance management system built to:
 
 </div>
 
-<br>
-
 ---
 
 ## 📁 Project Directory Structure
