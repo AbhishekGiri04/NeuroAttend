@@ -102,9 +102,9 @@ NeuroAttend is a revolutionary AI-powered attendance management system built to:
 
 ---
 
-## 🌐 Live Demo
-
 <div align="center">
+
+## 🌐 Live Demo
 
 🚀 **Experience NeuroAttend Live**
 
