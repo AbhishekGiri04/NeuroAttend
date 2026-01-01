@@ -364,28 +364,35 @@ cd frontend && rm -rf node_modules && npm install
 
 ---  
 
-## 📞 Help & Contact
+## 📞 Help & Contact  
 
-💬 *Got questions or need assistance with NeuroAttend? We're here to help with integration and customization!*
+> 💬 *Got questions or need assistance with NeuroAttend?*  
+> We're here to help with integration and customization!
 
-**👤 Abhishek Giri**  
+<div align="center">
+
+<b>👤 Abhishek Giri</b>  
 <a href="https://www.linkedin.com/in/abhishek-giri04/">
-  <img src="https://img.shields.io/badge/LinkedIn-Abhishek%20Giri-blue?style=for-the-badge&logo=linkedin" alt="LinkedIn - Abhishek Giri"/>  
+  <img src="https://img.shields.io/badge/Connect%20on-LinkedIn-blue?style=for-the-badge&logo=linkedin" alt="LinkedIn - Abhishek Giri"/>
 </a>  
 <a href="https://github.com/abhishekgiri04">
-  <img src="https://img.shields.io/badge/GitHub-Abhishek%20Giri-black?style=for-the-badge&logo=github" alt="GitHub - Abhishek Giri"/>  
+  <img src="https://img.shields.io/badge/Follow%20on-GitHub-black?style=for-the-badge&logo=github" alt="GitHub - Abhishek Giri"/>
 </a>  
 <a href="https://t.me/AbhishekGiri7">
-  <img src="https://img.shields.io/badge/Telegram-Abhishek%20Giri-blue?style=for-the-badge&logo=telegram" alt="Telegram - Abhishek Giri"/>  
+  <img src="https://img.shields.io/badge/Chat%20on-Telegram-blue?style=for-the-badge&logo=telegram" alt="Telegram - Abhishek Giri"/>
 </a>
 
-<br>
+<br/>
 
 ---
+
+<div align="center">
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+</div>
 
 ---
 
