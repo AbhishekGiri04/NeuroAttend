@@ -401,6 +401,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**© 2025 NeuroAttend AI System. All Rights Reserved.**
+**© 2026 NeuroAttend AI System. All Rights Reserved.**
 
 </div>
